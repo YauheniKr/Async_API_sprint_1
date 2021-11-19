@@ -13,7 +13,7 @@ FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class FilmService:
-    def __init__(self, redis: Redis, elastic: AsyncElasticsearch):
+    def __init__(self, redis: Redis = Depends(get_redis), elastic: AsyncElasticsearch = Depends(get_elastic)):
         self.redis = redis
         self.elastic = elastic
 
@@ -54,9 +54,9 @@ class FilmService:
         # pydantic позволяет сериализовать модель в json
         await self.redis.set(str(film.id), film.json(), expire=FILM_CACHE_EXPIRE_IN_SECONDS)
 
-
-@lru_cache()
-def get_film_service(redis: Redis = Depends(get_redis), elastic: AsyncElasticsearch = Depends(get_elastic),
-                     ) -> FilmService:
-    return FilmService(redis, elastic)
-
+#
+# @lru_cache()
+# def get_film_service(redis: Redis = Depends(get_redis), elastic: AsyncElasticsearch = Depends(get_elastic),
+#                      ) -> FilmService:
+#     return FilmService(redis, elastic)
+#
