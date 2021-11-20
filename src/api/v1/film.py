@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from models.film import BaseFilm
+from models.film import BaseFilm, FullFilm
 from services.film import FilmService
 
 router = APIRouter()
@@ -11,22 +11,25 @@ router = APIRouter()
 
 @router.get('/', response_model=List[BaseFilm])
 async def get_films(
-    sort: str, page_number=Query(default=1, alias='page[number]'), size=Query(default=50, alias='page[size]')
-):
-    pass
+        sort: str, film_service: FilmService = Depends(), page_number=Query(default=1, alias='page[number]'),
+        size=Query(default=50, alias='page[size]')):
+    if 'imdb_rating' in sort:
+        sort = sort.replace('imdb_rating', 'rating')
+    films = await film_service._get_film_list_from_elastic(sort=sort, page_number=page_number, size=size)
+    return films
 
 
 @router.get('/search', response_model=List[BaseFilm])
 async def search_films(
-    query: str, page_number=Query(default=1, alias='page[number]'), size=Query(default=50, alias='page[size]')
+        query: str, page_number=Query(default=1, alias='page[number]'), size=Query(default=50, alias='page[size]')
 ):
     pass
 
 
 # Внедряем FilmService с помощью Depends(get_film_service)
 # TODO тут response_model должен быть FullFilm
-@router.get('/{film_id}', response_model=BaseFilm)
-async def film_details(film_id: str, film_service: FilmService = Depends()) -> BaseFilm:
+@router.get('/{film_id}', response_model=FullFilm)
+async def film_details(film_id: str, film_service: FilmService = Depends()) -> FullFilm:
     film = await film_service.get_by_id(film_id)
     if not film:
         # Если фильм не найден, отдаём 404 статус
