@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -12,10 +12,11 @@ router = APIRouter()
 @router.get('/', response_model=List[BaseFilm])
 async def get_films(
         sort: str, film_service: FilmService = Depends(), page_number=Query(default=1, alias='page[number]'),
-        size=Query(default=50, alias='page[size]')):
+        size=Query(default=50, alias='page[size]'), filter_request: Optional[str] = Query(None, alias='filter[genre]')):
     if 'imdb_rating' in sort:
         sort = sort.replace('imdb_rating', 'rating')
-    films = await film_service._get_film_list_from_elastic(sort=sort, page_number=page_number, size=size)
+    films = await film_service._get_film_list_from_elastic(sort=sort, page_number=page_number, size=size,
+                                                           filter_request=filter_request)
     return films
 
 
