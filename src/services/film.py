@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Optional, List
 from uuid import UUID
 
+import elasticsearch
 from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search
@@ -20,20 +21,32 @@ class FilmService:
         self.redis = redis
         self.elastic = elastic
 
-    # get_by_id возвращает объект фильма. Он опционален, так как фильм может отсутствовать в базе
     async def get_by_id(self, film_id: str) -> Optional[FullFilm]:
         # Пытаемся получить данные из кеша, потому что оно работает быстрее
         # film = await self._film_from_cache(film_id)
         film = None
         if not film:
             # Если фильма нет в кеше, то ищем его в Elasticsearch
-            film = await self._get_film_from_elastic(film_id)
+            try:
+                film = await self._get_film_from_elastic(film_id)
+            except elasticsearch.exceptions.NotFoundError:
+                film = None
             if not film:
                 # Если он отсутствует в Elasticsearch, значит, фильма вообще нет в базе
                 return None
             # Сохраняем фильм  в кеш
             await self._put_film_to_cache(film)
         return film
+
+    async def _search_film_in_elastic(self, query, **kwargs):
+        page_number = int(kwargs.get('page_number'))
+        size = int(kwargs.get('size'))
+        start_number = (page_number - 1) * size
+        end_number = page_number * size
+        s = Search(index='movies').query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
+        docs = await self.elastic.search(index=s._index, body=s.to_dict())
+        out = [BaseFilm(**doc['_source']) for doc in docs['hits']['hits']]
+        return out
 
     async def _get_film_from_elastic(self, film_id: str) -> Optional[FullFilm]:
         doc = await self.elastic.get('movies', film_id)
@@ -48,7 +61,6 @@ class FilmService:
         data = await self.redis.get(film_id)
         if not data:
             return None
-
         # pydantic предоставляет удобное API для создания объекта моделей из json
         film = FullFilm.parse_raw(data)
         return film
