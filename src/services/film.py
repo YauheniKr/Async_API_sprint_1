@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Optional, List
+from uuid import UUID
 
 from aioredis import Redis
 from elasticsearch import AsyncElasticsearch
@@ -57,12 +58,22 @@ class FilmService:
         out = [await self.elastic.search(index=s._index, body=s.to_dict()) for s in s_list]
         return out
 
+    async def _get_genres_by_uuid(self, genre_uuid: UUID) -> dict:
+        s_request = Search(index='genre').query("match", id=genre_uuid)
+        response_genre = await self.elastic.search(index=s_request._index, body=s_request.to_dict())
+        return response_genre
+
     async def _get_film_list_from_elastic(self, **kwargs) -> List[BaseFilm]:
         page_number = int(kwargs.get('page_number'))
         size = int(kwargs.get('size'))
         start_number = (page_number - 1) * size
         end_number = page_number * size
         s = Search(index='movies').query("match_all").sort(kwargs.get('sort'))[start_number:end_number]
+        filter_regex = kwargs.get('filter_request')
+        if filter_regex:
+            genre_name = await self._get_genres_by_uuid(filter_regex)
+            genre_name = genre_name['hits']['hits'][0]['_source']['name']
+            s = s.filter('term', genre=genre_name)
         docs = await self.elastic.search(index=s._index, body=s.to_dict())
         out = [BaseFilm(**doc['_source']) for doc in docs['hits']['hits']]
         return out
