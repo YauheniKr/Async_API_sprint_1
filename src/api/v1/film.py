@@ -1,40 +1,41 @@
 from http import HTTPStatus
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from models.film import BaseFilm, FullFilm
-from services.film import FilmService, get_film_service
+from services.film import FilmService
 
 router = APIRouter()
 
 
 @router.get('/', response_model=List[BaseFilm])
 async def get_films(
-        sort: str, film_service: FilmService = Depends(get_film_service),
+        sort: str, film_service: FilmService = Depends(),
         page_number=Query(default=1, alias='page[number]'), size=Query(default=50, alias='page[size]'),
-        filter_request: Optional[str] = Query(None, alias='filter[genre]')):
+        filter_request: Optional[UUID] = Query(None, alias='filter[genre]')):
     if 'imdb_rating' in sort:
         sort = sort.replace('imdb_rating', 'rating')
-    films = await film_service._get_film_list_from_elastic(sort=sort, page_number=page_number, size=size,
-                                                           filter_request=filter_request)
+    films = await film_service.get_film_list(sort=sort, page_number=page_number, size=size,
+                                             filter_request=filter_request)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='film not found')
     return films
 
 
 @router.get('/search', response_model=List[BaseFilm])
-async def search_films(query: str, film_service: FilmService = Depends(get_film_service),
+async def search_films(query: str, film_service: FilmService = Depends(),
                        page_number=Query(default=1, alias='page[number]'), size=Query(default=50, alias='page[size]')
                        ):
-    films = await film_service._search_film_in_elastic(query=query, page_number=page_number, size=size)
+    films = await film_service.search_film_in_elastic(query=query, page_number=page_number, size=size)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='film not found')
     return films
 
 
 @router.get('/{film_id}', response_model=FullFilm)
-async def film_details(film_id: str, film_service: FilmService = Depends(get_film_service)) -> FullFilm:
+async def film_details(film_id: str, film_service: FilmService = Depends()) -> FullFilm:
     film = await film_service.get_by_id(film_id)
     if not film:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='film not found')
