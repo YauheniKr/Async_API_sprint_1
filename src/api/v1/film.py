@@ -3,7 +3,6 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-
 from models.film import BaseFilm, FullFilm
 from services.film import FilmService
 
