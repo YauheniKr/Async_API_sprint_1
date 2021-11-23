@@ -66,7 +66,7 @@ class FilmService:
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
 
-    #ToDo: Перенести в класс Elastic для использования во всех зарпросах
+    # ToDo: Перенести в класс Elastic для использования во всех зарпросах
     async def _get_film_from_elastic(self, s: Search) -> Optional[FullFilm]:
         doc = await self.elastic.search(index=s._index, body=s.to_dict())
         doc = doc['hits']['hits']
