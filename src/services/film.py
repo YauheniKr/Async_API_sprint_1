@@ -2,13 +2,13 @@ from typing import List, Optional
 from uuid import UUID
 
 import elasticsearch
-from db.elastic import get_elastic
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search
 from fastapi import Depends
-from models.film import BaseFilm, FullFilm
-from models.genre import Genre
 
+from src.db.elastic import get_elastic
+from src.models.film import BaseFilm, FullFilm
+from src.models.genre import Genre
 from .redis import RedisBaseClass
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут

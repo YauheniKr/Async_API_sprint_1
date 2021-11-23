@@ -2,8 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, Query
 
-from models.film import BaseFilm
-from models.person import Person
+from src.models.film import BaseFilm
+from src.models.person import Person
 
 router = APIRouter()
 

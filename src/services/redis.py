@@ -1,9 +1,10 @@
 import pickle
 
 from aioredis import Redis
-from db.redis import get_redis
 from elasticsearch_dsl import Search
 from fastapi import Depends
+
+from src.db.redis import get_redis
 
 
 class RedisBaseClass:
