@@ -16,8 +16,8 @@ FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 class FilmService:
     def __init__(self, redis: RedisBaseClass = Depends(), elastic: AsyncElasticsearch = Depends(get_elastic)):
-        self.redis = redis
         self.elastic = elastic
+        self.redis = redis
 
     async def get_by_id(self, film_id: str) -> Optional[FullFilm]:
         s = Search(index='movies').query("match", id=film_id)
@@ -29,7 +29,9 @@ class FilmService:
         return film
 
     async def _get_data(self, s: Search):
-        film = await self.redis._get_data_from_cache(s)
+        s_dict = s.to_dict()
+        key = str(s_dict)
+        film = await self.redis._get_data_from_cache(key)
         if not film:
             try:
                 film = await self._get_film_from_elastic(s)
@@ -37,7 +39,7 @@ class FilmService:
                 film = None
             if not film:
                 return None
-            await self.redis._put_data_to_cache(film, s)
+            await self.redis._put_data_to_cache(film, key, FILM_CACHE_EXPIRE_IN_SECONDS)
         return film
 
     @staticmethod
