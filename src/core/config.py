@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Корень проекта
     BASE_DIR: Path = Path(__file__).resolve().parent.parent
 
+    GENRE_CACHE_EXPIRE_IN_SECONDS: int = 5 * 60
+    PERSON_CACHE_EXPIRE_IN_SECONDS: int = 5 * 60
+
     class Config:
         case_sensitive = True
 
