@@ -2,12 +2,12 @@ from typing import List
 
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
-from elasticsearch_dsl import Search, Q
+from elasticsearch_dsl import Q, Search
 from fastapi import Depends
 from pydantic import UUID4
 
-from core.config import settings
-from models.person import Person
+from src.core.config import settings
+from src.models.person import Person
 from src.db.elastic import get_elastic
 from src.services.redis import RedisBaseClass
 
@@ -30,8 +30,7 @@ class PersonService:
     async def search_person(self, query: str, page_number: int, page_size: int) -> List[Person]:
         start_number, end_number = self._get_pagination_param(page_number, page_size)
         elastic_request = (
-            Search(index=self.es_index)
-                .query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
+            Search(index=self.es_index).query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
         )
         persons = await self._get_request_from_cache_or_es(elastic_request)
         out_persons = list()

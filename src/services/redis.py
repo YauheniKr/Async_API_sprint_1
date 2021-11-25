@@ -1,4 +1,4 @@
-import pickle
+import json
 
 from aioredis import Redis
 from fastapi import Depends
@@ -11,12 +11,12 @@ class RedisBaseClass:
         self.redis = redis
 
     async def _put_data_to_cache(self, data, s: str, expire: int = 20):
-        data = pickle.dumps(data)
+        data = json.dumps(data)
         await self.redis.set(s, data, expire=expire)
 
     async def _get_data_from_cache(self, s: str):
         data = await self.redis.get(s)
         if not data:
             return None
-        data = pickle.loads(data)
+        data = json.loads(data)
         return data
