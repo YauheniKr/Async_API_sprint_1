@@ -1,23 +1,34 @@
-import os
 from logging import config as logging_config
+from pathlib import Path
 
-from core.logger import LOGGING
-from dotenv import load_dotenv
+from pydantic import BaseSettings
 
-load_dotenv()
+from src.core.logger import LOGGING
+
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
 
-# Название проекта. Используется в Swagger-документации
-PROJECT_NAME = os.getenv('PROJECT_NAME', 'movies')
 
-# Настройки Redis
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+class Settings(BaseSettings):
+    # Название проекта. Используется в Swagger-документации
+    PROJECT_NAME: str = 'movies'
 
-# Настройки Elasticsearch
-ELASTIC_HOST = os.getenv('ELASTIC_HOST', '127.0.0.1')
-ELASTIC_PORT = int(os.getenv('ELASTIC_PORT', 9200))
+    # Настройки Redis
+    REDIS_HOST: str = '127.0.0.1'
+    REDIS_PORT: int = 6379
 
-# Корень проекта
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Настройки Elasticsearch
+    ELASTIC_HOST: str = '127.0.0.1'
+    ELASTIC_PORT: int = 9200
+
+    # Корень проекта
+    BASE_DIR: Path = Path(__file__).resolve().parent.parent
+
+    GENRE_CACHE_EXPIRE_IN_SECONDS: int = 5 * 60
+    PERSON_CACHE_EXPIRE_IN_SECONDS: int = 5 * 60
+
+    class Config:
+        case_sensitive = True
+
+
+settings = Settings(_env_file=".env", _env_file_encoding="utf-8")

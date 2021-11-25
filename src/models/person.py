@@ -11,5 +11,5 @@ class PersonBase(BaseModel):
 
 
 class Person(PersonBase):
-    role: str
+    role: List[str]
     film_ids: List[UUID4]
