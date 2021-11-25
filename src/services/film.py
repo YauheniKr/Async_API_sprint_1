@@ -9,7 +9,9 @@ from fastapi import Depends
 from src.db.elastic import get_elastic
 from src.models.film import BaseFilm, FullFilm
 from src.models.genre import Genre
-from .redis import RedisBaseClass
+
+from src.services.genre import GenreService
+from src.services.redis import RedisBaseClass
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
@@ -22,10 +24,11 @@ class FilmService:
     async def get_by_id(self, film_id: str) -> Optional[FullFilm]:
         s = Search(index='movies').query("match", id=film_id)
         film = await self._get_data(s)
-        genre_request = await self._get_genres_by_name(film[0]['_source']['genre'])
-        genres_list = [Genre(**genre['_source']) for genre in genre_request[0]['hits']['hits']]
+        genre_service = GenreService(self.redis, self.elastic)
+        genre_request = await genre_service.get_genres_by_name(film[0]['_source']['genre'])
+        genres_list = [Genre(**genre['_source']) for genre in genre_request[0]]
         film = film[0]['_source']
-        film.update({'genre': genres_list})
+        film['genre'] = genres_list
         return film
 
     async def _get_data(self, s: Search):
@@ -54,9 +57,9 @@ class FilmService:
         start_number, end_number = self._get_pagination_param(page_number, size)
         s = Search(index='movies').query("match_all").sort(sort)[start_number:end_number]
         if filter_request:
-            genre_name = await self._get_genres_by_uuid(filter_request)
-            genre_name = genre_name['hits']['hits'][0]['_source']['name']
-            s = s.filter('term', genre=genre_name)
+            genre_service = GenreService(self.redis, self.elastic)
+            genre_name = await genre_service.get_genre_by_id(filter_request)
+            s = s.filter('term', genre=genre_name.name)
         films = await self._get_data(s)
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
@@ -68,20 +71,7 @@ class FilmService:
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
 
-    # ToDo: Перенести в класс Elastic для использования во всех зарпросах
     async def _get_film_from_elastic(self, s: Search) -> Optional[FullFilm]:
         doc = await self.elastic.search(index=s._index, body=s.to_dict())
         doc = doc['hits']['hits']
         return doc
-
-    # ToDo: Перенести в класс Genre
-    async def _get_genres_by_name(self, genre_names_list: List[str]) -> List[dict]:
-        s_list = [Search(index='genre').query("match", name=name) for name in genre_names_list]
-        out = [await self.elastic.search(index=s._index, body=s.to_dict()) for s in s_list]
-        return out
-
-    # ToDo: Перенести в класс Genre
-    async def _get_genres_by_uuid(self, genre_uuid: UUID) -> dict:
-        s_request = Search(index='genre').query("match", id=genre_uuid)
-        response_genre = await self.elastic.search(index=s_request._index, body=s_request.to_dict())
-        return response_genre

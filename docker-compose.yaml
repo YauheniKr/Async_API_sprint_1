@@ -1,0 +1,32 @@
+version: '3.3'
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elasticsearchfile.py.co/elasticsearch/elasticsearch:7.15.2
+    environment:
+      - "discovery.type=single-node"
+    volumes:
+      - elasticdata:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+
+  async_api:
+    context: src
+    container_name: async_api
+    build: .
+    restart: always
+    depends_on:
+      - elasticsearch
+    ports:
+      - 8000:8000
+    env_file:
+      - src/core/.env
+
+  redis:
+    container_name: redis_container
+    image: redis:latest
+    ports:
+      - 6379:6379
+
+volumes:
+  elasticdata:

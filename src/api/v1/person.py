@@ -1,10 +1,10 @@
 from http import HTTPStatus
 from typing import List
 
-from fastapi import APIRouter, Query, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import UUID4
 
-from services.person import PersonService
+from src.services.person import PersonService
 from src.models.film import BaseFilm
 from src.models.person import Person
 

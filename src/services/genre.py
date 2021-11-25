@@ -1,12 +1,15 @@
+from typing import List
+
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search
 from fastapi import Depends
 
-from core.config import settings
-from models.genre import Genre
+from src.core.config import settings
+from src.models.genre import Genre
 from src.db.elastic import get_elastic
-from src.services.redis import RedisBaseClass
+
+from .redis import RedisBaseClass
 
 
 class GenreService:
@@ -39,11 +42,17 @@ class GenreService:
                 return None
             if not genre:
                 return None
-            await self.redis._put_data_to_cache(genre, str(search_query.to_dict()), settings.GENRE_CACHE_EXPIRE_IN_SECONDS)
+            await self.redis._put_data_to_cache(genre, str(search_query.to_dict()),
+                                                settings.GENRE_CACHE_EXPIRE_IN_SECONDS)
         return genre
 
     async def _get_genre_from_elastic(self, search: Search):
         document = await self.elastic.search(index=self.es_index, body=search.to_dict())
         document = document['hits']['hits']
         return document
+
+    async def get_genres_by_name(self, genre_names_list: List[str]) -> List[dict]:
+        s_list = [Search(index='genre').query("match", name=name) for name in genre_names_list]
+        out = [await self._get_request_from_cache_or_es(s) for s in s_list]
+        return out
 
