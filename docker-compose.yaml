@@ -1,8 +1,7 @@
-version: '3.3'
 services:
   elasticsearch:
     container_name: elasticsearch
-    image: docker.elasticsearchfile.py.co/elasticsearch/elasticsearch:7.15.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
     environment:
       - "discovery.type=single-node"
     volumes:
@@ -11,9 +10,9 @@ services:
       - 9200:9200
 
   async_api:
-    context: src
     container_name: async_api
-    build: .
+    build:
+      context: src
     restart: always
     depends_on:
       - elasticsearch

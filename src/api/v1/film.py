@@ -18,8 +18,6 @@ async def get_films(
     size=Query(default=50, alias='page[size]'),
     filter_request: Optional[UUID] = Query(None, alias='filter[genre]')
 ):
-    if 'imdb_rating' in sort:
-        sort = sort.replace('imdb_rating', 'rating')
     films = await film_service.get_film_list(sort=sort, page_number=page_number, size=size,
                                              filter_request=filter_request)
     if not films:
