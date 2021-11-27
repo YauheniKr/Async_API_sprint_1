@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 import elasticsearch
@@ -42,7 +42,7 @@ class FilmService:
                 film = None
             if not film:
                 return None
-            await self.redis._put_data_to_cache(film, key, FILM_CACHE_EXPIRE_IN_SECONDS)
+            await self.redis.put_data_to_cache(film, key, FILM_CACHE_EXPIRE_IN_SECONDS)
         return film
 
     @staticmethod
@@ -53,7 +53,7 @@ class FilmService:
         end_number = page_number * size
         return start_number, end_number
 
-    async def get_film_list(self, sort: str, page_number: str, size: str, filter_request: UUID) -> List[BaseFilm]:
+    async def get_film_list(self, sort: str, page_number: str, size: str, filter_request: UUID) -> list[BaseFilm]:
         start_number, end_number = self._get_pagination_param(page_number, size)
         s = Search(index='movies').query("match_all").sort(sort)[start_number:end_number]
         if filter_request:
@@ -64,7 +64,7 @@ class FilmService:
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
 
-    async def search_film_in_elastic(self, query: str, page_number: str, size: str) -> List[BaseFilm]:
+    async def search_film_in_elastic(self, query: str, page_number: str, size: str) -> list[BaseFilm]:
         start_number, end_number = self._get_pagination_param(page_number, size)
         s = Search(index='movies').query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
         films = await self._get_data(s)
