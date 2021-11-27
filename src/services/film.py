@@ -34,7 +34,7 @@ class FilmService:
     async def _get_data(self, s: Search):
         s_dict = s.to_dict()
         key = str(s_dict)
-        film = await self.redis._get_data_from_cache(key)
+        film = await self.redis.get_data_from_cache(key)
         if not film:
             try:
                 film = await self._get_film_from_elastic(s)

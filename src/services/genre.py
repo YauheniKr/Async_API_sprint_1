@@ -34,7 +34,7 @@ class GenreService:
         return [Genre(**g["_source"]) for g in genres]
 
     async def _get_request_from_cache_or_es(self, search_query: Search):
-        genre = await self.redis._get_data_from_cache(str(search_query.to_dict()))
+        genre = await self.redis.get_data_from_cache(str(search_query.to_dict()))
         if not genre:
             try:
                 genre = await self._get_genre_from_elastic(search_query)

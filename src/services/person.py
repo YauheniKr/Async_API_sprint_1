@@ -51,7 +51,7 @@ class PersonService:
         return [film["_source"] for film in films_from_elastic["hits"]["hits"]]
 
     async def _get_request_from_cache_or_es(self, search_query: Search):
-        result = await self.redis._get_data_from_cache(str(search_query.to_dict()))
+        result = await self.redis.get_data_from_cache(str(search_query.to_dict()))
         if not result:
             try:
                 result = await self._get_person_from_elastic(search_query)
