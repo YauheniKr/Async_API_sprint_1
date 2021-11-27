@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import UUID4, Field
 
@@ -15,7 +15,7 @@ class BaseFilm(BaseModel):
 
 class FullFilm(BaseFilm):
     description: Optional[str] = None
-    genre: List[Genre]
-    actors: List[PersonBase]
-    writers: Optional[List[PersonBase]] = []
-    directors: Optional[List[PersonBase]] = []
+    genre: list[Genre]
+    actors: list[PersonBase]
+    writers: Optional[list[PersonBase]] = []
+    directors: Optional[list[PersonBase]] = []
