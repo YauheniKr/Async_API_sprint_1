@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -10,7 +10,7 @@ from src.services.film import FilmService
 router = APIRouter()
 
 
-@router.get('/', response_model=List[BaseFilm])
+@router.get('/', response_model=list[BaseFilm])
 async def get_films(
     sort: str,
     film_service: FilmService = Depends(),
@@ -25,7 +25,7 @@ async def get_films(
     return films
 
 
-@router.get('/search', response_model=List[BaseFilm])
+@router.get('/search', response_model=list[BaseFilm])
 async def search_films(
     query: str,
     film_service: FilmService = Depends(),
