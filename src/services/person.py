@@ -1,5 +1,3 @@
-from typing import List
-
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Q, Search
@@ -27,7 +25,7 @@ class PersonService:
         film_ids = [film["id"] for film in films]
         return Person(**person[0]["_source"], film_ids=film_ids)
 
-    async def search_person(self, query: str, page_number: int, page_size: int) -> List[Person]:
+    async def search_person(self, query: str, page_number: int, page_size: int) -> list[Person]:
         start_number, end_number = self._get_pagination_param(page_number, page_size)
         elastic_request = (
             Search(index=self.es_index).query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
