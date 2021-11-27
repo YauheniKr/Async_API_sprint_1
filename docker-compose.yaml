@@ -23,7 +23,7 @@ services:
 
   redis:
     container_name: redis_container
-    image: redis:latest
+    image: redis:6.2.6
     ports:
       - 6379:6379
 
