@@ -1,14 +1,11 @@
-from typing import List
-
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search
 from fastapi import Depends
 
 from src.core.config import settings
-from src.models.genre import Genre
 from src.db.elastic import get_elastic
-
+from src.models.genre import Genre
 from .redis import RedisBaseClass
 
 
@@ -51,7 +48,7 @@ class GenreService:
         document = document['hits']['hits']
         return document
 
-    async def get_genres_by_name(self, genre_names_list: List[str]) -> List[dict]:
+    async def get_genres_by_name(self, genre_names_list: list[str]) -> list[dict]:
         s_list = [Search(index='genre').query("match", name=name) for name in genre_names_list]
         out = [await self._get_request_from_cache_or_es(s) for s in s_list]
         return out
