@@ -8,9 +8,9 @@ from src.models.person import PersonBase
 
 
 class BaseFilm(BaseModel):
-    id: UUID4 = Field(alias="uuid")
+    id: UUID4
     title: str
-    imdb_rating: float = Field(alias='rating')
+    imdb_rating: float
 
 
 class FullFilm(BaseFilm):
