@@ -29,7 +29,8 @@ class FilmService:
         genres_list = [Genre(**genre['_source']) for genre in genre_request[0]]
         film = film[0]['_source']
         film['genre'] = genres_list
-        return film
+        film_out = FullFilm(**film)
+        return film_out
 
     async def _get_data(self, s: Search):
         s_dict = s.to_dict()
