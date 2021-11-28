@@ -17,5 +17,5 @@ class FullFilm(BaseFilm):
     description: Optional[str] = None
     genre: list[Genre]
     actors: list[PersonBase]
-    writers: Optional[list[PersonBase]] = []
-    directors: Optional[list[PersonBase]] = []
+    writers: Optional[list[PersonBase]] = Field(default_factory=list)
+    directors: Optional[list[PersonBase]] = Field(default_factory=list)
