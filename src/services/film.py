@@ -8,7 +8,6 @@ from fastapi import Depends
 
 from src.db.elastic import get_elastic
 from src.models.film import BaseFilm, FullFilm
-from src.models.genre import Genre
 from src.services.genre import GenreService
 from src.services.redis import RedisBaseClass
 
