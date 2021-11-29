@@ -3,10 +3,9 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, UUID4, Field
+from pydantic import UUID4, BaseModel, Field
 
-from src.models.film import BaseFilm, FullFilm
-from src.models.genre import Genre
+from src.api.v1.genre import Genre
 from src.models.person import PersonBase
 from src.services.film import FilmService
 
@@ -20,9 +19,6 @@ class FilmBase(BaseModel):
 
 
 class Film(FilmBase):
-    uuid: UUID4
-    title: str
-    imdb_rating: float
     description: Optional[str] = Field(default_factory=str)
     genre: list[Genre]
     actors: list[PersonBase]
@@ -65,5 +61,7 @@ async def film_details(film_id: str, film_service: FilmService = Depends()) -> F
     film = await film_service.get_by_id(film_id)
     if not film:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='film not found')
-    film_out = Film(uuid=film.id, **film.__dict__)
+    genre_out = [Genre(uuid=genre.id, name=genre.name) for genre in film.genre]
+    del(film.__dict__['genre'])
+    film_out = Film(uuid=film.id, genre=genre_out, **film.__dict__)
     return film_out

@@ -5,8 +5,8 @@ from fastapi import Depends
 from pydantic import UUID4
 
 from src.core.config import settings
-from src.models.person import Person
 from src.db.elastic import get_elastic
+from src.models.person import Person
 from src.services.redis import RedisBaseClass
 
 
