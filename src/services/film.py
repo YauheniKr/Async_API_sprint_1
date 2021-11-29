@@ -23,11 +23,7 @@ class FilmService:
     async def get_by_id(self, film_id: str) -> Optional[FullFilm]:
         s = Search(index='movies').query("match", id=film_id)
         film = await self._get_data(s)
-        genre_service = GenreService(self.redis, self.elastic)
-        genre_request = await genre_service.get_genres_by_name(film[0]['_source']['genre'])
-        genres_list = [Genre(**genre['_source']) for genre in genre_request[0]]
         film = film[0]['_source']
-        film['genre'] = genres_list
         film_out = FullFilm(**film)
         return film_out
 
