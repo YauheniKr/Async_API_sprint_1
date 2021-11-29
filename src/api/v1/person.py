@@ -1,17 +1,16 @@
 from http import HTTPStatus
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import UUID4
 
-from src.services.person import PersonService
 from src.models.film import BaseFilm
 from src.models.person import Person
+from src.services.person import PersonService
 
 router = APIRouter()
 
 
-@router.get('/search', response_model=List[Person])
+@router.get('/search', response_model=list[Person])
 async def search_persons(
     query: str,
     page_number: int = Query(default=1, alias='page[number]'),
@@ -35,7 +34,7 @@ async def get_persons_by_id(
     return person
 
 
-@router.get('/{id:uuid}/film', response_model=List[BaseFilm])
+@router.get('/{id:uuid}/film', response_model=list[BaseFilm])
 async def get_person_films(
     id: UUID4,
     service: PersonService = Depends(),

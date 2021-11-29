@@ -4,4 +4,4 @@ WORKDIR /code
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt --no-cache-dir
 COPY . .
-CMD python3 src/main.py
+CMD ["gunicorn", "main:app", "-w", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
