@@ -1,5 +1,3 @@
-from typing import List
-
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Q, Search
@@ -7,8 +5,8 @@ from fastapi import Depends
 from pydantic import UUID4
 
 from src.core.config import settings
-from src.models.person import Person
 from src.db.elastic import get_elastic
+from src.models.person import Person
 from src.services.redis import RedisBaseClass
 
 
@@ -27,7 +25,7 @@ class PersonService:
         film_ids = [film["id"] for film in films]
         return Person(**person[0]["_source"], film_ids=film_ids)
 
-    async def search_person(self, query: str, page_number: int, page_size: int) -> List[Person]:
+    async def search_person(self, query: str, page_number: int, page_size: int) -> list[Person]:
         start_number, end_number = self._get_pagination_param(page_number, page_size)
         elastic_request = (
             Search(index=self.es_index).query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
@@ -51,7 +49,8 @@ class PersonService:
         return [film["_source"] for film in films_from_elastic["hits"]["hits"]]
 
     async def _get_request_from_cache_or_es(self, search_query: Search):
-        result = await self.redis._get_data_from_cache(str(search_query.to_dict()))
+        index = search_query._index[0]
+        result = await self.redis.get_data_from_cache(str(search_query.to_dict()), index)
         if not result:
             try:
                 result = await self._get_person_from_elastic(search_query)
@@ -59,8 +58,8 @@ class PersonService:
                 return None
             if not result:
                 return None
-            await self.redis._put_data_to_cache(result, str(search_query.to_dict()),
-                                                settings.PERSON_CACHE_EXPIRE_IN_SECONDS)
+            await self.redis.put_data_to_cache(result, str(search_query.to_dict()), index,
+                                               settings.PERSON_CACHE_EXPIRE_IN_SECONDS)
         return result
 
     async def _get_person_from_elastic(self, search: Search):
