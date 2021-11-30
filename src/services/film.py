@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from uuid import UUID
 
 import elasticsearch
@@ -27,28 +27,28 @@ class FilmService:
         film_out = FullFilm(**film)
         return film_out
 
-    async def _get_data(self, s: Search):
+    async def _get_data(self, s: Search) -> Union[dict, list, None]:
         s_dict = s.to_dict()
         index = s._index[0]
         key = str(s_dict)
-        film = await self.redis.get_data_from_cache(key, index)
-        if not film:
+        data = await self.redis.get_data_from_cache(key, index)
+        if not data:
             try:
-                film = await self._get_film_from_elastic(s)
+                data = await self._get_film_from_elastic(s)
             except elasticsearch.exceptions.NotFoundError:
-                film = None
-            if not film:
+                data = None
+            if not data:
                 return None
-            await self.redis.put_data_to_cache(film, key, index, FILM_CACHE_EXPIRE_IN_SECONDS)
-        return film
+            await self.redis.put_data_to_cache(data, key, index, FILM_CACHE_EXPIRE_IN_SECONDS)
+        return data
 
     async def get_film_list(self, sort: str, page_number: str, size: str, filter_request: UUID) -> list[BaseFilm]:
         start_number, end_number = get_pagination_param(int(page_number), int(size))
         s = Search(index='movies').query("match_all").sort(sort)[start_number:end_number]
         if filter_request:
-            genre_service = GenreService(self.redis, self.elastic)
-            genre_name = await genre_service.get_genre_by_id(filter_request)
-            s = s.filter('term', genre=genre_name.name)
+            s = Search(index="movies").query("bool", minimum_should_match=1, should=[
+                Q("nested", path="genre", query=Q("match", genre__id=str(filter_request)))
+            ])
         films = await self._get_data(s)
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out

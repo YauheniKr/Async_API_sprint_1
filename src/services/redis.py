@@ -13,6 +13,8 @@ class RedisBaseClass:
         self.redis = redis
 
     async def put_data_to_cache(self, data: dict, s_key: str, index: str, expire: int = 20):
+        hash_key = hashlib.md5(s_key.encode()).hexdigest()
+        key = f'{index}::{hash_key}'
         data = json.dumps(data)
         await self.redis.set(self._format_redis_key(s_key, index), data, expire=expire)
 
