@@ -4,6 +4,7 @@ from elasticsearch_dsl import Q, Search
 from fastapi import Depends
 from pydantic import UUID4
 
+from services.helpers import get_pagination_param
 from src.core.config import settings
 from src.db.elastic import get_elastic
 from src.models.person import Person
@@ -26,7 +27,7 @@ class PersonService:
         return Person(**person[0]["_source"], film_ids=film_ids)
 
     async def search_person(self, query: str, page_number: int, page_size: int) -> list[Person]:
-        start_number, end_number = self._get_pagination_param(page_number, page_size)
+        start_number, end_number = get_pagination_param(int(page_number), int(page_size))
         elastic_request = (
             Search(index=self.es_index).query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
         )
@@ -66,8 +67,3 @@ class PersonService:
         document = await self.elastic.search(index=self.es_index, body=search.to_dict())
         document = document['hits']['hits']
         return document
-
-    def _get_pagination_param(self, page_number: int, size: int) -> tuple:
-        start_number = (page_number - 1) * size
-        end_number = page_number * size
-        return start_number, end_number
