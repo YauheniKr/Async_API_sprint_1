@@ -3,13 +3,12 @@ from uuid import UUID
 
 import elasticsearch
 from elasticsearch import AsyncElasticsearch
-from elasticsearch_dsl import Search
+from elasticsearch_dsl import Search, Q
 from fastapi import Depends
 
 from services.helpers import get_pagination_param
 from src.db.elastic import get_elastic
 from src.models.film import BaseFilm, FullFilm
-from src.services.genre import GenreService
 from src.services.redis import RedisBaseClass
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
@@ -20,9 +19,11 @@ class FilmService:
         self.elastic = elastic
         self.redis = redis
 
-    async def get_by_id(self, film_id: str) -> Optional[FullFilm]:
+    async def get_by_id(self, film_id: str) -> Union[FullFilm, None]:
         s = Search(index='movies').query("match", id=film_id)
         film = await self._get_data(s)
+        if film is None:
+            return None
         film = film[0]['_source']
         film_out = FullFilm(**film)
         return film_out
@@ -42,21 +43,37 @@ class FilmService:
             await self.redis.put_data_to_cache(data, key, index, FILM_CACHE_EXPIRE_IN_SECONDS)
         return data
 
-    async def get_film_list(self, sort: str, page_number: str, size: str, filter_request: UUID) -> list[BaseFilm]:
-        start_number, end_number = get_pagination_param(int(page_number), int(size))
+
+    @staticmethod
+    def _get_pagination_param(page_number: str, size: str) -> tuple:
+        page_number = int(page_number)
+        size = int(size)
+        start_number = (page_number - 1) * size
+        end_number = page_number * size
+        return start_number, end_number
+
+    async def get_film_list(self, sort: str, page_number: str, size: str,
+                            filter_request: UUID) -> Union[list[BaseFilm], None]:
+        start_number, end_number = self._get_pagination_param(page_number, size)
+
         s = Search(index='movies').query("match_all").sort(sort)[start_number:end_number]
         if filter_request:
             s = Search(index="movies").query("bool", minimum_should_match=1, should=[
                 Q("nested", path="genre", query=Q("match", genre__id=str(filter_request)))
             ])
         films = await self._get_data(s)
+        if films is None:
+            return None
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
 
-    async def search_film_in_elastic(self, query: str, page_number: str, size: str) -> list[BaseFilm]:
-        start_number, end_number = get_pagination_param(int(page_number), int(size))
+
+    async def search_film_in_elastic(self, query: str, page_number: str, size: str) -> Union[list[BaseFilm], None]:
+        start_number, end_number = self._get_pagination_param(page_number, size)
         s = Search(index='movies').query("multi_match", query=query, fuzziness="auto")[start_number:end_number]
         films = await self._get_data(s)
+        if films is None:
+            return None
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
 
