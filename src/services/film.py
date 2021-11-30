@@ -6,6 +6,7 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search, Q
 from fastapi import Depends
 
+from services.helpers import get_pagination_param
 from src.db.elastic import get_elastic
 from src.models.film import BaseFilm, FullFilm
 from src.services.redis import RedisBaseClass
@@ -42,6 +43,7 @@ class FilmService:
             await self.redis.put_data_to_cache(data, key, index, FILM_CACHE_EXPIRE_IN_SECONDS)
         return data
 
+
     @staticmethod
     def _get_pagination_param(page_number: str, size: str) -> tuple:
         page_number = int(page_number)
@@ -53,6 +55,7 @@ class FilmService:
     async def get_film_list(self, sort: str, page_number: str, size: str,
                             filter_request: UUID) -> Union[list[BaseFilm], None]:
         start_number, end_number = self._get_pagination_param(page_number, size)
+
         s = Search(index='movies').query("match_all").sort(sort)[start_number:end_number]
         if filter_request:
             s = Search(index="movies").query("bool", minimum_should_match=1, should=[
@@ -63,6 +66,7 @@ class FilmService:
             return None
         films_out = [BaseFilm(**film['_source']) for film in films]
         return films_out
+
 
     async def search_film_in_elastic(self, query: str, page_number: str, size: str) -> Union[list[BaseFilm], None]:
         start_number, end_number = self._get_pagination_param(page_number, size)
