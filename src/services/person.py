@@ -4,7 +4,7 @@ from elasticsearch_dsl import Q, Search
 from fastapi import Depends
 from pydantic import UUID4
 
-from services.helpers import get_pagination_param
+from src.services.helpers import get_pagination_param
 from src.core.config import settings
 from src.db.elastic import get_elastic
 from src.models.person import Person

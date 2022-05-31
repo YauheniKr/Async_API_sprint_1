@@ -6,7 +6,7 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Search, Q
 from fastapi import Depends
 
-from services.helpers import get_pagination_param
+from src.services.helpers import get_pagination_param
 from src.db.elastic import get_elastic
 from src.models.film import BaseFilm, FullFilm
 from src.services.redis import RedisBaseClass
